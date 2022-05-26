@@ -5,6 +5,7 @@ Rails.application.routes.draw do
       # post "/users/", to: "users#create"
 
       resources :users
+      resources :tokens , only: [:create]
 
     end
   end
