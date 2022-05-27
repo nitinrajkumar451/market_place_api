@@ -45,7 +45,7 @@ class Api::V1::UsersController < ApplicationController
     end
     private
     def user_params
-      params.permit(:email, :password_digest)
+        params.permit(:email, :password_digest)
     end
     # def set_book
     #   @book = Book.find(params[:id])

@@ -5,7 +5,8 @@ Rails.application.routes.draw do
       # post "/users/", to: "users#create"
 
       resources :users
-      resources :tokens , only: [:create]
+      resources :tokens , only: %i[create]
+      resources :products, only: %i[show index create update destroy ]
 
     end
   end
