@@ -1,4 +1,5 @@
 class Api::V1::UsersController < ApplicationController
+    before_action :check_owner, only: %i[update destroy]
     def index
         @users = User.all
         
@@ -17,30 +18,30 @@ class Api::V1::UsersController < ApplicationController
         user=User.find(params[:id])
         render json: user.as_json
     end
-    def update
-        
-        if User.exists?(params[:id])
-            user =User.find(params[:id])
-            user.password_digest=params[:password_digest]
-            user.save
-            render json: user.as_json
-
-        else
-            error ={"message"=>"Could not find the user"}
-            render json: error.as_json, status: :not_found
-        end
+    def update        
+        user =User.find(params[:id])
+        user.password_digest=params[:password_digest]
+        user.save
+        render json: user.as_json
     end
     def destroy
+
+        user =User.find(params[:id])
+        user.destroy
+        error ={"message"=>"Could not find the user"}
+        render json: error.as_json, status: :no_content
+
+
+    end
+    private 
+    def check_owner
         if User.exists?(params[:id])
-            user =User.find(params[:id])
-            user.destroy
-            render  status: :no_content
+            @user =User.find(params[:id])
+            head :unauthorized unless @user.id == current_user&.id
         else
             error ={"message"=>"Could not find the user"}
             render json: error.as_json, status: :not_found
         end
-
-
     end
     private
     def user_params

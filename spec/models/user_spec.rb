@@ -22,7 +22,7 @@ RSpec.describe User, type: :model do
   it 'is not valid with existing email' do
     # pending
     user = create(:user)   
-    user1 = build(:user, email: "nitin@incubyte.co")
+    user1 = build(:user, email: "alpha@incubyte.co")
     expect(user1).not_to be_valid
 
   end

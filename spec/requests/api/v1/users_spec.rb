@@ -10,7 +10,7 @@ RSpec.describe "Api::V1::Users", type: :request do
       expect(response.status).to eq(200)      
       
     end
-    # pending "add some examples (or delete) #{__FILE__}"
+
   end
   describe 'POST /users/' do
 
@@ -41,7 +41,6 @@ RSpec.describe "Api::V1::Users", type: :request do
     context 'when request attributes are in-valid' do
       it 'returns status code 422' do 
         post '/api/v1/users', params: { email: 'alp1@ine.com', password_digest: ''}
-        # puts(JSON.parse(response.body))
         expect(response).to have_http_status(422)
       end
     end
@@ -56,45 +55,62 @@ RSpec.describe "Api::V1::Users", type: :request do
     end
   end
   describe 'PUT /users/:id' do
-    context 'when a user with the id exists' do
-      it 'updates the user and returns the updated user' do
-        put "/api/v1/users/#{user_id}", params: {  password_digest: 'password123'}
-        expected = JSON.parse(response.body)
-        expected_id= expected["id"]  
-        expected_pwd= expected["password_digest"]  
-        expect(expected_id).to be_a_kind_of(Integer)
-        expect(expected_id).to eq(user_id)
-        expect(expected_pwd).to eq('password123')
+    context 'when the user is authorized' do
+      context 'when a user with the id exists' do
+        it 'updates the user and returns the updated user' do
+          post '/api/v1/users', params: { email: 'alp1@ine.com', password_digest: 'password'}
+          put "/api/v1/users/2", params: {  password_digest: 'password1234'}, headers: { Authorization:
+            JsonWebToken.encode(user_id: 2) }, as: :json
+          expected = JSON.parse(response.body)
+          expected_id= expected["id"]  
+          expected_pwd= expected["password_digest"]  
+          expect(expected_id).to be_a_kind_of(Integer)
+          expect(expected_id).to eq(2)
+          expect(expected_pwd).to eq('password1234')
+        end
       end
-    end
-    context 'when a user with the id does not exist' do
-      it 'returns status code 404' do
-        put "/api/v1/users/200", params: {  password_digest: 'password123'}      
-        expect(response).to have_http_status(404)        
+      context 'when a user with the id does not exist' do
+        it 'returns status code 404' do
+          put "/api/v1/users/200", params: {  password_digest: 'password123'}, headers: { Authorization:
+            JsonWebToken.encode(user_id: 200) }, as: :json    
+          expect(response).to have_http_status(404)        
+        end
+        it 'returns message could not find the user' do
+          put "/api/v1/users/200", params: {  password_digest: 'password123'}, headers: { Authorization:
+            JsonWebToken.encode(user_id: 1) }, as: :json      
+          expected = JSON.parse(response.body) 
+          expected_message= expected["message"]
+          expect(expected_message).to eq("Could not find the user")        
+        end
       end
-      it 'returns message could not find the user' do
-        put "/api/v1/users/200", params: {  password_digest: 'password123'}      
-        expected = JSON.parse(response.body) 
-        expected_message= expected["message"]
-        # puts expected_message
-        expect(expected_message).to eq("Could not find the user")        
-      end
+
     end
   end
   describe 'DELETE /users/:id' do
-    context 'when the user with the id exists' do
-      it 'returns a status code of 204' do
-        delete '/api/v1/users/1'
-        puts response.status
-        expect(response).to have_http_status(204)
+    context 'when the users is authorized' do          
+      context 'and when the user with the id exists' do
+
+        it 'returns a status code of 204' do
+          delete '/api/v1/users/1', headers: { Authorization:
+            JsonWebToken.encode(user_id: 1) }, as: :json
+          expect(response).to have_http_status(204)
+        end
+      end
+      context 'and when the user with id does not exist' do
+        it 'returns a status code of 404' do
+          delete '/api/v1/users/200', headers: { Authorization:
+            JsonWebToken.encode(user_id: 1) }, as: :json
+          expect(response).to have_http_status(404)
+
+        end
       end
     end
-    context 'when the user with id does not exist' do
-      it 'returns a status code of 404' do
-        delete '/api/v1/users/200'
-        puts response.status
-        expect(response).to have_http_status(404)
-
+    context 'when the user is not authorized' do
+      let!(:user) { create(:user, email: 'abc@gmail.com', password_digest: "alp") }
+      it 'returns a status code of 401' do
+        delete '/api/v1/users/1', headers: { Authorization:
+          JsonWebToken.encode(user_id: 2) }, as: :json
+        expect(response).to have_http_status(401)
       end
     end
   end
