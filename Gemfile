@@ -62,3 +62,5 @@ group :test do
   gem 'shoulda-matchers'
 end
 
+
+gem "jsonapi-serializer", "~> 2.2"

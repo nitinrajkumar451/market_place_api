@@ -8,21 +8,23 @@ class Api::V1::UsersController < ApplicationController
     def create
         user = User.create(user_params)
         if user.save 
-            render json: user.as_json, status: :created
+            render json: UserSerializer.new(user).serializable_hash.to_json, status: :created
                     
         else 
             render json: user.errors, status: :unprocessable_entity
         end
     end
     def show
+
         user=User.find(params[:id])
-        render json: user.as_json
+        options = { include: [:products] }
+        render json: UserSerializer.new(user, options).serializable_hash.to_json, status: :created
     end
     def update        
         user =User.find(params[:id])
         user.password_digest=params[:password_digest]
         user.save
-        render json: user.as_json
+        render json: UserSerializer.new(user).serializable_hash.to_json
     end
     def destroy
 

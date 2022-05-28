@@ -7,9 +7,16 @@ RSpec.describe "Api::V1::Products", type: :request do
     it 'returns the product with the queried id' do
       get "/api/v1/products/#{product.id}"
       expected = JSON.parse(response.body)
-      expected_id = expected["id"]
-      expect(expected_id).to be_a_kind_of(Integer)
-      expect(expected_id).to eq(product.id)
+      user_id =expected["data"]["relationships"]["user"]["data"]["id"]
+      # user_id = expected.dig(:data,
+      #   :relationships, :user, :data, :id)
+      user_email = expected["included"][0]["attributes"]["email"]
+      # user_email = expected.dig(:included, 0, :attributes, :email ) 
+      expected_id = expected["data"]["id"]
+      expect(expected_id.to_i).to be_a_kind_of(Integer)
+      expect(expected_id.to_i).to eq(product.id)
+      expect(user_id.to_s).to eq("1")
+      expect(user_email).to eq("alpha@incubyte.co")
     end
   end
   describe "GET /index" do
@@ -18,7 +25,7 @@ RSpec.describe "Api::V1::Products", type: :request do
       expect(response.status).to eq(200)        
     end
   end
-  describe 'POST /users/' do
+  describe 'POST /products/' do
     let(:valid_attributes) do
       { email: 'alp1@ine.com', password_digest: 'password'}      
     end
@@ -29,10 +36,15 @@ RSpec.describe "Api::V1::Products", type: :request do
             JsonWebToken.encode(user_id: product.user_id) }, as: :json
         expect(response).to have_http_status(201)
         expected = JSON.parse(response.body)
-        expected_email= expected["title"]
-        id= expected["id"]
+        user_id =expected["data"]["relationships"]["user"]["data"]["id"]
+        # user_id = expected.dig(:data,
+        #   :relationships, :user, :data, :id)
+        user_email = expected["included"][0]["attributes"]["email"]
+        expected_email= expected["data"]["attributes"]["title"]
+        # id= expected["data"]["id"]
         expect(expected_email).to eq('alp')    
-        expect(id).to eq(2)            
+        expect(user_id.to_i).to eq(1) 
+        expect(user_email).to eq("alpha@incubyte.co")
       end
     end
     context 'when request attributes in valid or user is not provided' do
@@ -53,10 +65,10 @@ RSpec.describe "Api::V1::Products", type: :request do
           put "/api/v1/products/2", params: {  title: 'password1234'}, headers: { Authorization:
             JsonWebToken.encode(user_id: 2) }, as: :json
           expected = JSON.parse(response.body)
-          expected_id= expected["id"]  
-          expected_pwd= expected["title"]  
-          expect(expected_id).to be_a_kind_of(Integer)
-          expect(expected_id).to eq(2)
+          expected_id= expected["data"]["id"]  
+          expected_pwd= expected["data"]["attributes"]["title"]
+          expect(expected_id.to_i).to be_a_kind_of(Integer)
+          expect(expected_id.to_i).to eq(2)
           expect(expected_pwd).to eq('password1234')
         end
       end
